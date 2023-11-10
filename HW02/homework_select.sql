@@ -38,9 +38,6 @@ where StockItemName like '%urgent%' or StockItemName like 'Animal%'
 select sup.SupplierID, sup.SupplierName from Purchasing.Suppliers as sup left join Purchasing.PurchaseOrders as pur
 on sup.SupplierID = pur.SupplierID where pur.SupplierID is null
 
---проверка
-select top 10 * from Purchasing.PurchaseOrders where SupplierID in (3, 6, 8, 9, 11, 13)
-
 /*
 3. Заказы (Orders) с ценой товара (UnitPrice) более 100$ 
 либо количеством единиц (Quantity) товара более 20 штук
