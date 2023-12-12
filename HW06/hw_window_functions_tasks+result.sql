@@ -175,11 +175,45 @@ order by t0.Month2016 asc, t0.ПроданоВМесяце desc
 --TODO:
 --* пронумеруйте записи по названию товара, так чтобы при изменении буквы алфавита нумерация начиналась заново
 --ВООБЩЕ НЕ ПОНЯТНОЕ ЗАДАНИЕ!!!
+select 
+row_number() over (partition by t1.firstsymbol order by t1.StockItemName),
+*
+from(
+select SUBSTRING (StockItems.StockItemName, 1, 1) as firstsymbol, * from Warehouse.StockItems 
+) t1
+
 
 --* посчитайте общее количество товаров и выведете полем в этом же запросе
--- В КАКИХ ТАБЛИЦАХ ПОСЧИТАТЬ???
+select
+(select 
+--sum(StockItems.StockItemID)
+count(*)
+from Warehouse.StockItems) Количество,
+* from Warehouse.StockItems
 
---НЕ ПОНЯЛ ЭТО ЗАДАНИЕ... 
+--* посчитайте общее количество товаров в зависимости от первой буквы названия товара
+select distinct
+sum(t1.num) over (partition by t1.firstsymbol) Количество,
+t1.firstsymbol
+from
+(
+select SUBSTRING (StockItemName, 1, 1) as firstsymbol, 1 as num from Warehouse.StockItems
+) t1
+
+
+--* отобразите следующий id товара исходя из того, что порядок отображения товаров по имени 
+-- если честно не очень понял как применить lead и lag
+select 
+lead(StockItemID, 1) over (partition by StockItemName order by StockItemID)
+,*
+from Warehouse.StockItems
+
+--* предыдущий ид товара с тем же порядком отображения (по имени)
+select 
+lag(StockItemID, 1) over (partition by StockItemName order by StockItemID)
+,*
+from Warehouse.StockItems
+
 
 /*
 5. По каждому сотруднику выведите последнего клиента, которому сотрудник что-то продал.
@@ -193,14 +227,14 @@ from
 	from 
 	(
 		select distinct
-		peo.PersonID as IDСотрудника, 
-		peo.FullName as ИмяСотрудника, 
+		peo.CustomerID as IDСотрудника, 
+		peo.[CustomerName] as ИмяСотрудника, 
 		peo2.PersonID as IDКлиента, 
 		peo2.FullName as ИмяКлиента, 
 		inv.ConfirmedDeliveryTime as Дата,
 		sum(invl.Quantity*invl.UnitPrice) over (partition by invl.InvoiceID) as Сумма
-		from [Sales].[Invoices] inv inner join [Application].[People] peo 
-		on inv.SalespersonPersonID = peo.PersonID
+		from [Sales].[Invoices] inv inner join Sales.Customers peo 
+		on inv.SalespersonPersonID = peo.CustomerID
 		inner join [Application].[People] peo2 
 		on inv.ContactPersonID = peo2.PersonID
 		inner join Sales.InvoiceLines invl
@@ -219,15 +253,15 @@ where t0.Последняя = 1
 	from 
 	(
 		select distinct
-		peo2.PersonID as IDКлиента, 
-		peo2.FullName as ИмяКлиента, 
+		peo2.CustomerID as IDКлиента, 
+		peo2.[CustomerName] as ИмяКлиента, 
 		invl.StockItemID as IDТовара,
 		inv.InvoiceDate as Дата,
 		invl.UnitPrice,
-		dense_rank() over (partition by peo2.PersonID order by invl.UnitPrice desc) as ЦенаРейтинг
+		dense_rank() over (partition by peo2.CustomerID order by invl.UnitPrice desc) as ЦенаРейтинг
 		from [Sales].[Invoices] inv 
-		inner join [Application].[People] peo2 
-		on inv.ContactPersonID = peo2.PersonID
+		inner join Sales.Customers peo2 
+		on inv.ContactPersonID = peo2.CustomerID
 		inner join Sales.InvoiceLines invl
 		on inv.InvoiceID = invl.InvoiceID
 	) t1 where t1.ЦенаРейтинг < 3
