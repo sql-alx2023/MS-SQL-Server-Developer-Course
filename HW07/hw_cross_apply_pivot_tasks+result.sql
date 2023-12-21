@@ -47,7 +47,6 @@ with datatable as
 select distinct
 count(orderID) over (partition by ContactPersonID, month(orderdate), year(orderdate)) as Number,
 DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
---ContactPersonID,
 peo.FullName as FullName
 from sales.Orders as ord
 inner join Application.People peo
@@ -61,6 +60,25 @@ PIVOT (sum(Number)
 		for FullName in ([Lorena Cindric], [Bhaargav Rambhatla] )
 ) as pivottable
 
+
+--Вероятно клиентов посмотрел не в той таблице, тогда этот вариант:
+with datatable as
+(
+select distinct
+count(orderID) over (partition by ContactPersonID, month(orderdate), year(orderdate)) as Number,
+DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
+substring(cus.CustomerName, CHARINDEX('(', cus.CustomerName)+1, len(cus.CustomerName)-CHARINDEX('(', CustomerName)) as FullName
+from sales.Orders as ord
+inner join Sales.Customers cus
+on ord.ContactPersonID = cus.CustomerID
+where cus.CustomerID between 1002 and 1006
+)
+
+select convert(varchar, beginMonth, 104) as 'InvoiceMonth', [Hue Ton], [Bhadram Kamasamudram]
+from  datatable
+PIVOT (sum(Number)
+		for FullName in ([Hue Ton], [Bhadram Kamasamudram] )
+) as pivottable
 
 /*
 2. Для всех клиентов с именем, в котором есть "Tailspin Toys"
@@ -76,9 +94,18 @@ Tailspin Toys (Head Office) | PO Box 8975
 Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
-
---Нет таких клиентов
-select * from Application.People where FullName like '%Tailspin Toys%'
+select CustomerName, AddressVariant
+from (
+	select 
+		CustomerName, 
+		DeliveryAddressLine1, 
+		DeliveryAddressLine2, 
+		PostalAddressLine1, 
+		PostalAddressLine2 
+		from Sales.Customers 
+		where CustomerName like '%Tailspin Toys%'
+		) as adrs
+unpivot (AddressVariant for AddressType in (DeliveryAddressLine1, DeliveryAddressLine2, PostalAddressLine1, PostalAddressLine2)) as unp
 
 
 /*
@@ -97,7 +124,7 @@ CountryId | CountryName | Code
 ----------+-------------+-------
 */
 
-select * 
+select CountryID, CountryName, Code 
 from 
 (
 	select 
