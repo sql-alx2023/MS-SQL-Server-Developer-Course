@@ -142,3 +142,19 @@ unpivot (Code for CountryData in (IsoAlpha3Code, IsoNumericCode)) as unp
 В результатах должно быть ид клиета, его название, ид товара, цена, дата покупки.
 */
 
+with t2 as
+(
+	select CustomerID, CustomerName, StockItemID, UnitPrice, OrderDate,
+	ROW_NUMBER() over (partition by t1.CustomerID order by t1.UnitPrice desc) as number1
+	from(
+		select cus.CustomerID, cus.CustomerName, ordl.StockItemID, ordl.UnitPrice, max(ord.OrderDate) as OrderDate
+		from Sales.OrderLines ordl
+		inner join Sales.Orders ord
+		on ordl.OrderID = ord.OrderID
+		inner join Sales.Customers cus
+		on ord.CustomerID = cus.CustomerID
+		group by cus.CustomerID, cus.CustomerName, ordl.StockItemID, ordl.UnitPrice
+		) t1
+)
+select CustomerID, CustomerName, StockItemID, UnitPrice, OrderDate from t2 where number1 < 3
+order by t2.CustomerName
