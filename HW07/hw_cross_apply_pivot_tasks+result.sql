@@ -47,37 +47,17 @@ with datatable as
 select distinct
 count(orderID) over (partition by ContactPersonID, month(orderdate), year(orderdate)) as Number,
 DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
-peo.FullName as FullName
-from sales.Orders as ord
-inner join Application.People peo
-on ord.ContactPersonID = peo.PersonID
-where ContactPersonID between 1002 and 1006
-
-)
-select convert(varchar, beginMonth, 104) as 'InvoiceMonth', [Lorena Cindric], [Bhaargav Rambhatla] 
-from  datatable
-PIVOT (sum(Number)
-		for FullName in ([Lorena Cindric], [Bhaargav Rambhatla] )
-) as pivottable
-
-
---Вероятно клиентов посмотрел не в той таблице, тогда этот вариант:
-with datatable as
-(
-select distinct
-count(orderID) over (partition by ContactPersonID, month(orderdate), year(orderdate)) as Number,
-DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
 substring(cus.CustomerName, CHARINDEX('(', cus.CustomerName)+1, len(cus.CustomerName)-CHARINDEX('(', CustomerName)) as FullName
 from sales.Orders as ord
 inner join Sales.Customers cus
-on ord.ContactPersonID = cus.CustomerID
+on ord.CustomerID = cus.CustomerID
 where cus.CustomerID between 1002 and 1006
 )
 
-select convert(varchar, beginMonth, 104) as 'InvoiceMonth', [Hue Ton], [Bhadram Kamasamudram]
+select convert(varchar, beginMonth, 104) as 'InvoiceMonth', [Hue Ton], [Bhadram Kamasamudram], [Stefan Selezeanu], [Drishti Bose], [Taj Syme]
 from  datatable
 PIVOT (sum(Number)
-		for FullName in ([Hue Ton], [Bhadram Kamasamudram] )
+		for FullName in ([Hue Ton], [Bhadram Kamasamudram], [Stefan Selezeanu], [Drishti Bose], [Taj Syme] )
 ) as pivottable
 
 /*
