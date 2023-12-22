@@ -41,12 +41,13 @@ InvoiceMonth | Peeples Valley, AZ | Medicine Lodge, KS | Gasport, NY | Sylvanite
 use WideWorldImporters
 -- В таблице Orders нет клиентов с ContactPersonID от 2 до 6. минимальный ID 1001
 -- Буду делать для ID от 1002 до 1006
-
+	
 with datatable as
 (
 select distinct
 count(orderID) over (partition by ContactPersonID, month(orderdate), year(orderdate)) as Number,
-DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
+--DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
+DATETRUNC(month, orderdate) as beginMonth,
 substring(cus.CustomerName, CHARINDEX('(', cus.CustomerName)+1, len(cus.CustomerName)-CHARINDEX('(', CustomerName)) as FullName
 from sales.Orders as ord
 inner join Sales.Customers cus
