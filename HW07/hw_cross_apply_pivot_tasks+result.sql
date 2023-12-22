@@ -48,17 +48,17 @@ select distinct
 count(orderID) over (partition by ContactPersonID, month(orderdate), year(orderdate)) as Number,
 --DATEFROMPARTS(YEAR(orderdate),MONTH(orderdate),1) as beginMonth, 
 DATETRUNC(month, orderdate) as beginMonth,
-substring(cus.CustomerName, CHARINDEX('(', cus.CustomerName)+1, len(cus.CustomerName)-CHARINDEX('(', CustomerName)) as FullName
+substring(cus.CustomerName, CHARINDEX('(', cus.CustomerName)+1, len(cus.CustomerName)-CHARINDEX('(', CustomerName)-1) as FullName
 from sales.Orders as ord
 inner join Sales.Customers cus
 on ord.CustomerID = cus.CustomerID
-where cus.CustomerID between 1002 and 1006
+where cus.CustomerID between 2 and 6
 )
 
-select convert(varchar, beginMonth, 104) as 'InvoiceMonth', [Hue Ton], [Bhadram Kamasamudram], [Stefan Selezeanu], [Drishti Bose], [Taj Syme]
+select convert(varchar, beginMonth, 104) as 'InvoiceMonth', [Peeples Valley, AZ], [Medicine Lodge, KS], [Gasport, NY], [Sylvanite, MT], [Jessie, ND]
 from  datatable
 PIVOT (sum(Number)
-		for FullName in ([Hue Ton], [Bhadram Kamasamudram], [Stefan Selezeanu], [Drishti Bose], [Taj Syme] )
+		for FullName in ([Peeples Valley, AZ], [Medicine Lodge, KS], [Gasport, NY], [Sylvanite, MT], [Jessie, ND])
 ) as pivottable
 
 /*
