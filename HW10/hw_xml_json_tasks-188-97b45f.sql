@@ -49,20 +49,6 @@ SELECT @xmlDocument = BulkColumn FROM OPENROWSET (BULK 'E:\BCP\StockItems.xml', 
 DECLARE @docHandle INT;
 EXEC sp_xml_preparedocument @docHandle OUTPUT, @xmlDocument;
 
-SELECT *
-FROM OPENXML(@docHandle, N'/StockItems/Item')
-WITH ( 
-	[StockItemName] NVARCHAR(100)  '@Name',
-	[SupplierID] int  'SupplierID',
-	[UnitPackageID] int  'Package/UnitPackageID',
-	[OuterPackageID] int  'Package/OuterPackageID',
-	[TypicalWeightPerUnit] decimal(18,3)  'Package/TypicalWeightPerUnit',
-	[LeadTimeDays] int  'LeadTimeDays',
-	[IsChillerStock] bit  'IsChillerStock',
-	[TaxRate] decimal(18,3)  'TaxRate',
-	[UnitPrice] decimal(18,2)  'UnitPrice'
-	);
-
 DROP TABLE IF EXISTS #StockItemsXML;
 
 CREATE TABLE #StockItemsXML(
@@ -70,6 +56,7 @@ CREATE TABLE #StockItemsXML(
 	[SupplierID] int,
 	[UnitPackageID] int,
 	[OuterPackageID] int,
+	[QuantityPerOuter] int,
 	[TypicalWeightPerUnit] decimal(18,3),
 	[LeadTimeDays] int,
 	[IsChillerStock] bit,
@@ -85,6 +72,7 @@ WITH (
 	[SupplierID] int  'SupplierID',
 	[UnitPackageID] int  'Package/UnitPackageID',
 	[OuterPackageID] int  'Package/OuterPackageID',
+	[QuantityPerOuter] int  'Package/QuantityPerOuter',
 	[TypicalWeightPerUnit] decimal(18,3)  'Package/TypicalWeightPerUnit',
 	[LeadTimeDays] int  'LeadTimeDays',
 	[IsChillerStock] bit  'IsChillerStock',
@@ -95,34 +83,81 @@ WITH (
 --select * from #StockItemsXML
 EXEC sp_xml_removedocument @docHandle;
 
---drop table IF EXISTS Warehouse.StockItems_copy;
---select * into Warehouse.StockItems_copy from Warehouse.StockItems
---select * from Warehouse.StockItems_copy 
-
 select * from Warehouse.StockItems as ttarget inner join #StockItemsXML as tsource on ttarget.StockItemName = tsource.StockItemName COLLATE Latin1_General_100_CI_AI
 
-
-
-  merge into Warehouse.StockItems_copy as TTarget
+  merge into Warehouse.StockItems as TTarget
   using #StockItemsXML as TSource
   on TTarget.StockItemName = TSource.StockItemName COLLATE Latin1_General_100_CI_AI
   when matched and (TTarget.SupplierID <> TSource.SupplierID or TTarget.UnitPackageID <> TSource.UnitPackageID or 
 					TTarget.OuterPackageID <> TSource.OuterPackageID or TTarget.TypicalWeightPerUnit <> TSource.TypicalWeightPerUnit or 
 					TTarget.LeadTimeDays <> TSource.LeadTimeDays or TTarget.IsChillerStock <> TSource.IsChillerStock or
-					TTarget.TaxRate <> TSource.TaxRate or TTarget.UnitPrice <> TSource.UnitPrice)
-	then update set TTarget.SupplierID = TSource.SupplierID, TTarget.UnitPackageID = TSource.UnitPackageID, TTarget.OuterPackageID = TSource.OuterPackageID, TTarget.TypicalWeightPerUnit = TSource.TypicalWeightPerUnit, 
-					TTarget.LeadTimeDays = TSource.LeadTimeDays, TTarget.IsChillerStock = TSource.IsChillerStock, TTarget.TaxRate = TSource.TaxRate, TTarget.UnitPrice = TSource.UnitPrice 
+					TTarget.TaxRate <> TSource.TaxRate or TTarget.UnitPrice <> TSource.UnitPrice or TTarget.QuantityPerOuter <> TSource.QuantityPerOuter)
+	then update set TTarget.StockItemName = TSource.StockItemName, TTarget.SupplierID = TSource.SupplierID, TTarget.UnitPackageID = TSource.UnitPackageID, TTarget.OuterPackageID = TSource.OuterPackageID, TTarget.TypicalWeightPerUnit = TSource.TypicalWeightPerUnit, 
+					TTarget.LeadTimeDays = TSource.LeadTimeDays, TTarget.IsChillerStock = TSource.IsChillerStock, TTarget.TaxRate = TSource.TaxRate, TTarget.UnitPrice = TSource.UnitPrice, TTarget.QuantityPerOuter = TSource.QuantityPerOuter 
   when not matched by target
-	then insert (SupplierID,UnitPackageID,OuterPackageID,TypicalWeightPerUnit,LeadTimeDays,IsChillerStock,TaxRate,UnitPrice)
+	then insert (StockItemName, SupplierID,UnitPackageID,OuterPackageID,QuantityPerOuter,TypicalWeightPerUnit,LeadTimeDays,IsChillerStock,TaxRate,UnitPrice,LastEditedBy)
 	  values
-	  (TSource.SupplierID,TSource.UnitPackageID,TSource.OuterPackageID,TSource.TypicalWeightPerUnit,TSource.LeadTimeDays,TSource.IsChillerStock,TSource.TaxRate,TSource.UnitPrice);
+	  (TSource.StockItemName,TSource.SupplierID,TSource.UnitPackageID,TSource.OuterPackageID,TSource.QuantityPerOuter,TSource.TypicalWeightPerUnit,TSource.LeadTimeDays,
+	  TSource.IsChillerStock,TSource.TaxRate,TSource.UnitPrice,1);
 
+
+----- через XQuery
+DECLARE @x XML;
+SET @x = ( 
+  SELECT * FROM OPENROWSET
+  (BULK 'E:\BCP\StockItems.xml',
+   SINGLE_BLOB) AS d);
+
+DROP TABLE IF EXISTS #StockItemsXML;
+
+CREATE TABLE #StockItemsXML(
+	[StockItemName] NVARCHAR(100),
+	[SupplierID] int,
+	[UnitPackageID] int,
+	[OuterPackageID] int,
+	[QuantityPerOuter] int,
+	[TypicalWeightPerUnit] decimal(18,3),
+	[LeadTimeDays] int,
+	[IsChillerStock] bit,
+	[TaxRate] decimal(18,3),
+	[UnitPrice] decimal(18,2)
+);
+
+INSERT INTO #StockItemsXML
+SELECT  
+  t.Item.value('(@Name[1])', 'varchar(100)') AS [SupplierName],
+  t.Item.value('SupplierID[1]', 'int') AS [Id],
+  t.Item.value('(Package/UnitPackageID)[1]', 'int') AS UnitPackageID,
+  t.Item.value('(Package/OuterPackageID)[1]', 'int') AS OuterPackageID,
+  t.Item.value('(Package/QuantityPerOuter)[1]', 'int') AS QuantityPerOuter,
+  t.Item.value('(Package/TypicalWeightPerUnit)[1]', 'decimal(18,3)') AS TypicalWeightPerUnit,
+  t.Item.value('(LeadTimeDays)[1]', 'int') AS LeadTimeDays,
+  t.Item.value('(IsChillerStock)[1]', 'BIT') AS IsChillerStock,
+  t.Item.value('(TaxRate)[1]', 'decimal(18,3)') AS TaxRate,
+  t.Item.value('(UnitPrice)[1]', 'decimal(18,2)') AS UnitPrice
+FROM @x.nodes('/StockItems/Item') AS t(Item);
+
+--select * from #StockItemsXML
+
+-- Далее аналогично предыдущему варианту
 
 /*
 2. Выгрузить данные из таблицы StockItems в такой же xml-файл, как StockItems.xml
 */
 
-напишите здесь свое решение
+SELECT 
+    StockItemName AS [@Name],
+	SupplierID as [SupplierID],
+	UnitPackageID as [Package/UnitPackageID],
+	OuterPackageID as [Package/OuterPackageID],
+	QuantityPerOuter as [Package/QuantityPerOuter],
+	TypicalWeightPerUnit as [Package/TypicalWeightPerUnit],
+	LeadTimeDays as [LeadTimeDays],
+	IsChillerStock as [IsChillerStock],
+	TaxRate as [TaxRate],
+	UnitPrice as [UnitPrice]	
+FROM Warehouse.StockItems 
+FOR XML PATH('Item'), ROOT('StockItems');
 
 
 /*
@@ -134,7 +169,12 @@ select * from Warehouse.StockItems as ttarget inner join #StockItemsXML as tsour
 - FirstTag (из поля CustomFields, первое значение из массива Tags)
 */
 
-напишите здесь свое решение
+SELECT
+    StockItemID AS StockItemID,
+    StockItemName AS StockItemName,
+    JSON_VALUE(CustomFields, '$.CountryOfManufacture') AS CountryOfManufacture,
+    JSON_VALUE(CustomFields, '$.Tags[0]') AS FirstTag
+ FROM Warehouse.StockItems;
 
 /*
 4. Найти в StockItems строки, где есть тэг "Vintage".
@@ -156,4 +196,10 @@ select * from Warehouse.StockItems as ttarget inner join #StockItemsXML as tsour
 */
 
 
-напишите здесь свое решение
+SELECT
+    StockItemID AS StockItemID,
+    StockItemName AS StockItemName,
+	JSON_QUERY(CustomFields, '$.Tags') AS AllTags
+FROM Warehouse.StockItems
+CROSS APPLY OPENJSON(CustomFields, '$.Tags') Tags
+WHERE Tags.value = 'Vintage';
