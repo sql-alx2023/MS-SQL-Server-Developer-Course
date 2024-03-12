@@ -1,65 +1,128 @@
-#  Exported from QuickDBD: https://www.quickdatabasediagrams.com/
-#  NOTE! If you have used non-SQL datatypes in your design, you will have to change these here.
+-- Exported from QuickDBD: https://www.quickdatabasediagrams.com/
+-- NOTE! If you have used non-SQL datatypes in your design, you will have to change these here.
 
-#  Клиенты
-Customer
---
-#  Код клиента
-CustomerID int PK # Clustered
-#  ФИО клиента
-Name string
-#  E-mail клиента
-Email string
+-- Exported from QuickDBD: https://www.quickdatabasediagrams.com/
+-- NOTE! If you have used non-SQL datatypes in your design, you will have to change these here.
 
-#  Заявки
-Orders
---
-#  ID заявки
-OrderID int PK # Clustered
-#  Дата и время выставления заявки
-Date datetime
-#  Код клиента
-CustomerID int FK >- Customer.CustomerID
-#  Вид заявки
-TypeID int FK >- OrdersType.TypeID
-#  Ценная бумага
-SecuritiesCode string FK >- Securities.SecuritiesCode
-#  Количество
-Qty int
-#  Цена
-Price int
-#  Сумма
-Value int
-#  Статус заявки
-OrderStatusID int FK >- OrderStatus.OrderStatusID
+SET XACT_ABORT ON
 
-#  Сделки
-Trades
---
-#  ID сделки
-TradeID int PK # Clustered
-#  ID заявки
-OrderID int FK >- Orders.OrderID
-#  Дата и время сделки
-Date datetime
+BEGIN TRANSACTION QUICKDBD
 
-#  Статусы заявок (Открыта/Исполнена/Отменена)
-OrderStatus
---
-OrderStatusID int PK # Clustered
-Name string UNIQUE
+-- Клиенты
+CREATE TABLE [Customer] (
+    -- Код клиента
+    -- Clustered
+    [CustomerID] int  NOT NULL ,
+    -- ФИО клиента
+    [Name] string  NOT NULL ,
+    -- E-mail клиента
+    [Email] string  NOT NULL ,
+    CONSTRAINT [PK_Customer] PRIMARY KEY CLUSTERED (
+        [CustomerID] ASC
+    )
+)
 
-#  Виды заявок/сделок (Покупка/Продажа)
-OrdersType
---
-TypeID int PK # Clustered
-Name string UNIQUE
+-- Заявки
+CREATE TABLE [Orders] (
+    -- ID заявки
+    -- Clustered
+    [OrderID] int  NOT NULL ,
+    -- Дата и время выставления заявки
+    [Date] datetime  NOT NULL ,
+    -- Код клиента
+    [CustomerID] int  NOT NULL ,
+    -- Вид заявки
+    [TypeID] int  NOT NULL ,
+    -- Ценная бумага
+    [SecuritiesCode] string  NOT NULL ,
+    -- Количество
+    [Qty] int  NOT NULL ,
+    -- Цена
+    [Price] int  NOT NULL ,
+    -- Сумма
+    [Value] int  NOT NULL ,
+    -- Статус заявки
+    [OrderStatusID] int  NOT NULL ,
+    CONSTRAINT [PK_Orders] PRIMARY KEY CLUSTERED (
+        [OrderID] ASC
+    )
+)
 
-#  Ценные бумаги
-Securities
---
-#  Код бумаги
-SecuritiesCode string PK # Clustered
-#  Наименование бумаги
-Name string
+-- Сделки
+CREATE TABLE [Trades] (
+    -- ID сделки
+    -- Clustered
+    [TradeID] int  NOT NULL ,
+    -- ID заявки
+    [OrderID] int  NOT NULL ,
+    -- Дата и время сделки
+    [Date] datetime  NOT NULL ,
+    CONSTRAINT [PK_Trades] PRIMARY KEY CLUSTERED (
+        [TradeID] ASC
+    )
+)
 
+-- Статусы заявок (Открыта/Исполнена/Отменена)
+CREATE TABLE [OrderStatus] (
+    -- Clustered
+    [OrderStatusID] int  NOT NULL ,
+    [Name] string  NOT NULL ,
+    CONSTRAINT [PK_OrderStatus] PRIMARY KEY CLUSTERED (
+        [OrderStatusID] ASC
+    ),
+    CONSTRAINT [UK_OrderStatus_Name] UNIQUE (
+        [Name]
+    )
+)
+
+-- Виды заявок/сделок (Покупка/Продажа)
+CREATE TABLE [OrdersType] (
+    -- Clustered
+    [TypeID] int  NOT NULL ,
+    [Name] string  NOT NULL ,
+    CONSTRAINT [PK_OrdersType] PRIMARY KEY CLUSTERED (
+        [TypeID] ASC
+    ),
+    CONSTRAINT [UK_OrdersType_Name] UNIQUE (
+        [Name]
+    )
+)
+
+-- Ценные бумаги
+CREATE TABLE [Securities] (
+    -- Код бумаги
+    -- Clustered
+    [SecuritiesCode] string  NOT NULL ,
+    -- Наименование бумаги
+    [Name] string  NOT NULL ,
+    CONSTRAINT [PK_Securities] PRIMARY KEY CLUSTERED (
+        [SecuritiesCode] ASC
+    )
+)
+
+ALTER TABLE [Orders] WITH CHECK ADD CONSTRAINT [FK_Orders_CustomerID] FOREIGN KEY([CustomerID])
+REFERENCES [Customer] ([CustomerID])
+
+ALTER TABLE [Orders] CHECK CONSTRAINT [FK_Orders_CustomerID]
+
+ALTER TABLE [Orders] WITH CHECK ADD CONSTRAINT [FK_Orders_TypeID] FOREIGN KEY([TypeID])
+REFERENCES [OrdersType] ([TypeID])
+
+ALTER TABLE [Orders] CHECK CONSTRAINT [FK_Orders_TypeID]
+
+ALTER TABLE [Orders] WITH CHECK ADD CONSTRAINT [FK_Orders_SecuritiesCode] FOREIGN KEY([SecuritiesCode])
+REFERENCES [Securities] ([SecuritiesCode])
+
+ALTER TABLE [Orders] CHECK CONSTRAINT [FK_Orders_SecuritiesCode]
+
+ALTER TABLE [Orders] WITH CHECK ADD CONSTRAINT [FK_Orders_OrderStatusID] FOREIGN KEY([OrderStatusID])
+REFERENCES [OrderStatus] ([OrderStatusID])
+
+ALTER TABLE [Orders] CHECK CONSTRAINT [FK_Orders_OrderStatusID]
+
+ALTER TABLE [Trades] WITH CHECK ADD CONSTRAINT [FK_Trades_OrderID] FOREIGN KEY([OrderID])
+REFERENCES [Orders] ([OrderID])
+
+ALTER TABLE [Trades] CHECK CONSTRAINT [FK_Trades_OrderID]
+
+COMMIT TRANSACTION QUICKDBD
