@@ -1,0 +1,14 @@
+1.Потребуется делать выборку сделок и заявок на дату
+
+Добавил индексы в таблицы Trades и Orders
+CREATE index idx_Date on Trades(Date)
+CREATE index idx_Date on Orders(Date)
+
+
+2.Потребуется находить клиента по фио
+Индекс на поле Name у таблицы Customers был сделан изначально
+CREATE index idx_Name on Customers(Name)
+
+3.Потребуется находить сделки и заявки по клиенту
+CREATE index idx_OrderID on Trades(OrderID)
+CREATE index idx_CustomerID on Orders(CustomerID)
