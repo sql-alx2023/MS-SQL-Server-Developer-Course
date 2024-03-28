@@ -68,6 +68,8 @@ CREATE TABLE [Trades] (
         [TradeID] ASC
     )
 )
+CREATE index idx_Date on Trades(Date)
+CREATE index idx_OrderID on Trades(OrderID)
 
 -- Создаем таблицу Заявки с кластерным индексом OrderID
 CREATE TABLE [Orders] (
@@ -84,6 +86,9 @@ CREATE TABLE [Orders] (
         [OrderID] ASC
     )
 )
+
+CREATE index idx_Date on Orders(Date)
+CREATE index idx_CustomerID on Orders(CustomerID)
 
 --EXEC sp_help Customers;
 
