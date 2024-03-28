@@ -92,6 +92,9 @@ ALTER TABLE Orders ADD CONSTRAINT Orders_Status_Check CHECK (OrderStatusID in [0
 --ALTER TABLE Orders NOCHECK CONSTRAINT Orders_Status_Check -- если захочется отключить чек констрейнт, например добавиться новый статус заявки, например, "частично исполнена" 
 --ALTER TABLE Orders CHECK CONSTRAINT Orders_Status_Check -- включить обратно
 
+ALTER TABLE Orders ADD CONSTRAINT Orders_Type_Check CHECK (OrderStatusID in [1, 2]); -- только два типа заявки [1, 2]
+
+
 ALTER TABLE [Orders] WITH CHECK ADD CONSTRAINT [FK_Orders_CustomerID] FOREIGN KEY([CustomerID])
 REFERENCES [Customer] ([CustomerID])
 ON UPDATE CASCADE
