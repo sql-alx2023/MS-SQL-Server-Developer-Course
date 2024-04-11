@@ -1,0 +1,9 @@
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\bin\Debug\MyClassLibrary.dll
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\bin\Debug\MyClassLibrary.pdb
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\bin\Debug\Microsoft.Analytics.Interfaces.dll
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\bin\Debug\Microsoft.Analytics.Interfaces.Streaming.dll
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\bin\Debug\Microsoft.Analytics.Types.dll
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\obj\Debug\MyClassLibrary.csproj.AssemblyReference.cache
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\obj\Debug\MyClassLibrary.csproj.CoreCompileInputs.cache
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\obj\Debug\MyClassLibrary.dll
+C:\Users\Пользователь\source\repos\MyClassLibrary\MyClassLibrary\obj\Debug\MyClassLibrary.pdb
